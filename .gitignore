@@ -1,4 +1,5 @@
 # Compiler files
+.vscode/
 client/node_modules/
 cache/
 out/
