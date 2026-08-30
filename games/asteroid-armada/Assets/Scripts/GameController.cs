@@ -71,9 +71,6 @@ public class GameController : MonoBehaviour
 
     private long gameSeed;
 
-    // use WalletAddress function from web3.jslib
-    [DllImport("__Internal")] private static extern string WalletAddress();
-
     void Start()
     {
         gameSeed = new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds();
@@ -434,11 +431,28 @@ public class GameController : MonoBehaviour
     // on server and make a web request to retrieve it when needed
     private IEnumerator SignAndSendTransaction()
     {
-        // TODO (Phase 2): call out to the JS bridge (SubmitScore) instead - the connected
-        // wallet in the React host signs and submits the transaction. No private key
-        // will ever live in this codebase again.
-        Debug.Log("TODO: submit score " + scoreValue.GetComponent<Text>().text + " for " + playerNameInput.text + " via JS bridge");
+        string player = string.IsNullOrEmpty(playerNameInput.text) ? "xxx" : playerNameInput.text;
+        int score = Convert.ToInt32(scoreValue.GetComponent<Text>().text);
+
+        Web3Bridge.Instance.OnScoreSubmissionComplete += HandleScoreSubmissionComplete;
+        Web3Bridge.Instance.SubmitScore(player, score);
+
         yield return null;
+    }
+
+    private void HandleScoreSubmissionComplete(bool success, string message, string txHash)
+    {
+        Web3Bridge.Instance.OnScoreSubmissionComplete -= HandleScoreSubmissionComplete;
+
+        if (success)
+        {
+            Debug.Log("Score submitted: " + message + " (tx: " + txHash + ")");
+        }
+        else
+        {
+            Debug.LogWarning("Score submission failed: " + message);
+        }
+
         SceneManager.LoadScene("MainMenu");
     }
 

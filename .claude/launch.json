@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "asteroid-armada-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "serve",
+        "-l",
+        "8080",
+        "/Users/montypadre/Documents/Projects/Games/asteroid-armada-onchain/games/asteroid-armada/Builds/Web"
+      ],
+      "port": 8080
+    }
+  ]
+}

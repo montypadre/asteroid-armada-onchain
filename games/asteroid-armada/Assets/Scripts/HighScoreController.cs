@@ -22,11 +22,26 @@ public class HighScoreController : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
     void Start()
     {
-        // TODO (Phase 2): request the leaderboard via the JS bridge instead of Nethereum.
-        // The React host will call back into a public method here (e.g. OnLeaderboardReceived)
-        // once the on-chain data has been fetched.
+        Web3Bridge.Instance.OnLeaderboardReceived += HandleLeaderboardReceived;
+        Web3Bridge.Instance.RequestLeaderboard();
+    }
+
+    private void Oestroy()
+    {
+        if (Web3Bridge.Instance != null)
+        {
+            Web3Bridge.Instance.OnLeaderboardReceived -= HandleLeaderboardReceived;
+        }       
+    }
+
+    private void HandleLeaderboardReceived(LeaderboardEntryData[] entries)
+    {
+        for (int i = 0; i < names.Length && i < entries.Length; i++)
+        {
+            names[i].text = string.IsNullOrEmpty(entries[i].player) ? "-" : entries[i].player;
+            scores[i].text = entries[i].score.ToString();
+        }
     }
 }
