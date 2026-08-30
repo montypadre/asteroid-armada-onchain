@@ -10,12 +10,6 @@ using System.Runtime.InteropServices;
 using CodeStage.AntiCheat.ObscuredTypes;
 using CodeStage.AntiCheat.Detectors;
 // use web3.jslib
-// using Nethereum RPC
-using Nethereum.JsonRpc.UnityClient;
-// using leaderboard contract definition
-using LeaderboardContract.Contracts.Leaderboard.ContractDefinition;
-// using gamelog contract definition
-using GameLogContract.Contracts.GameLog.ContractDefinition;
 
 
 public class GameController : MonoBehaviour
@@ -77,13 +71,8 @@ public class GameController : MonoBehaviour
 
     private long gameSeed;
 
-    public string gameServeAddress;
-
     // use WalletAddress function from web3.jslib
     [DllImport("__Internal")] private static extern string WalletAddress();
-    string url;
-    string contractAddress;
-    string gameLogContractAddress;
 
     void Start()
     {
@@ -120,11 +109,6 @@ public class GameController : MonoBehaviour
         wave3Anim = wave3.GetComponent<Animation>();
         wave4Anim = wave4.GetComponent<Animation>();
         animPlayed = false;
-
-        // Set contract URL and address
-        url = "https://data-seed-prebsc-1-s2.binance.org:8545/";
-        contractAddress = "0x8c8559286612050B75a232e1ccDA5bEC8d771a5b";
-        gameLogContractAddress = "0xEBc9068f6dEAEdb959d8eb409e226054C562032D";
     }
 
     //private IEnumerator SignAndSendGameServeAddress(string gameServeAddress)
@@ -165,22 +149,6 @@ public class GameController : MonoBehaviour
     //        Debug.Log("Error submitted tx: " + gameInfoRequest.Exception.Message);
     //    }
     //}
-
-    private IEnumerator ValidateGameSeed(long gameSeed)
-    {
-        var queryRequest = new QueryUnityRequest<IsGameSeedAlreadyUsedFunction, IsGameSeedAlreadyUsedOutputDTOBase>("https://data-seed-prebsc-1-s2.binance.org:8545/", gameLogContractAddress);
-        yield return queryRequest.Query(new IsGameSeedAlreadyUsedFunction() { GameSeed = gameSeed }, gameLogContractAddress);
-        Debug.Log(gameSeed);
-        Debug.Log("Game Seed Validated: " + queryRequest.Result);
-        //if (queryRequest.Result.SeedUsed)
-        //{
-        //    Debug.Log("Seed already exists");
-        //}
-        //else
-        //{
-        //    Debug.Log("Seed does not already exist");
-        //}
-    }
 
     private void OnCheaterDetected()
     {
@@ -444,26 +412,20 @@ public class GameController : MonoBehaviour
 
     private IEnumerator CheckHighScore()
     {
-        int leaderboardIndex = 4;
-        var queryRequest = new QueryUnityRequest<LeaderboardFunction, LeaderboardOutputDTOBase>(url, contractAddress);
-        yield return queryRequest.Query(new LeaderboardFunction() { ReturnValue1 = leaderboardIndex }, contractAddress);
+        // TODO (Phase 2): query the current leaderboard cutoff via the JS bridge instead.
+        // For now, always show the name-entry panel - the contract itself safely 
+        // rejects a score that doesn't qualify without reverting, so this is a safe default.
+        yield return null;
 
         if (scoreValue != null)
         {
-            if (Int64.Parse(scoreValue.GetComponent<Text>().text) > queryRequest.Result.Score)
+            highScorePanel.SetActive(true);
+            Cursor.visible = true;
+            playerNameInput.Select();
+            playerNameInput.onEndEdit.AddListener(delegate
             {
-                highScorePanel.SetActive(true);
-                Cursor.visible = true;
-                playerNameInput.Select();
-                playerNameInput.onEndEdit.AddListener(delegate { StartCoroutine(SignAndSendTransaction()); });
-            }
-            else if (Int64.Parse(scoreValue.GetComponent<Text>().text) < queryRequest.Result.Score)
-            {
-                gamePanel.SetActive(false);
-                blurPanel.SetActive(true);
-                gameOverPanel.SetActive(true);
-                Cursor.visible = true;
-            }
+                StartCoroutine(SignAndSendTransaction());
+            });
         }
     }
 
@@ -472,25 +434,11 @@ public class GameController : MonoBehaviour
     // on server and make a web request to retrieve it when needed
     private IEnumerator SignAndSendTransaction()
     {
-        yield return new WaitForSeconds(4);
-        var addScoreRequest = new TransactionSignedUnityRequest(url, "2a135a7c4a0309f4e77a197d863803f2127ba31119d14fe5e91ae6f24e0ef2bf", 97);
-        Debug.Log(playerNameInput.text);
-        if (playerNameInput.text != null)
-        {
-            yield return addScoreRequest.SignAndSendTransaction(new AddScoreFunction() { User = playerNameInput.text, Score = Convert.ToInt32(scoreValue.GetComponent<Text>().text) }, contractAddress);
-        }
-        else
-        {
-            yield return addScoreRequest.SignAndSendTransaction(new AddScoreFunction() { User = "xxx", Score = Convert.ToInt32(scoreValue.GetComponent<Text>().text) }, contractAddress);
-        }
-        if (addScoreRequest.Exception == null)
-        {
-            Debug.Log("High score submitted tx: " + addScoreRequest.Result);
-        }
-        else
-        {
-            Debug.Log("Error submitted tx: " + addScoreRequest.Exception.Message);
-        }
+        // TODO (Phase 2): call out to the JS bridge (SubmitScore) instead - the connected
+        // wallet in the React host signs and submits the transaction. No private key
+        // will ever live in this codebase again.
+        Debug.Log("TODO: submit score " + scoreValue.GetComponent<Text>().text + " for " + playerNameInput.text + " via JS bridge");
+        yield return null;
         SceneManager.LoadScene("MainMenu");
     }
 
