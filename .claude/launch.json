@@ -11,6 +11,12 @@
         "/Users/montypadre/Documents/Projects/Games/asteroid-armada-onchain/games/asteroid-armada/Builds/Web"
       ],
       "port": 8080
+    },
+    {
+      "name": "app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "app", "run", "dev"],
+      "port": 5173
     }
   ]
 }
